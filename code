@@ -31,7 +31,7 @@ void setup() {
 
 // the loop routine runs over and over again forever:
 void loop() {
-
+// Take reading and smooth out
   int reading = analogRead(sensorPin);
   int deviation = abs(reading - 512);
   EMA_S = (EMA_alpha * deviation) + ((1 - EMA_alpha) * EMA_S);
@@ -41,6 +41,7 @@ void loop() {
   Serial.println(EMA_S);
 #endif
 
+// Map readings to 6 LEDs
   int ledLevel = map(EMA_S, 10, 350, 0, ledCount);
   ledLevel = constrain(ledLevel, 0, ledCount);
 
@@ -51,12 +52,16 @@ void loop() {
 
   delay(10);
 
+// Reset timer while there is no noise
   if (ledLevel == 0) {
     startNoise = millis();
     digitalWrite(ledPins[0], LOW);
   }
 
+// Debounce delay to stop sudden bangs triggering sensor
   if ((millis() - startNoise) > noiseDelay) {
+  
+// Light the progress LEDs  
     for (int thisLed = 0; thisLed < ledCount; thisLed++) {
       if (thisLed < ledLevel) {
         digitalWrite(ledPins[thisLed], HIGH);
@@ -65,6 +70,8 @@ void loop() {
         digitalWrite(ledPins[thisLed], LOW);
       }
     }
+    
+// Trigger relay once loud enough    
     if (ledLevel == ledCount) {
       digitalWrite(laserPin, LOW);
       delay(10000);
